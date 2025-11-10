@@ -31,6 +31,72 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Decimal128,
     required: true,
     default: mongoose.Types.Decimal128.fromString("0")
+  },
+  // Anti-ban and verification fields
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  banReason: {
+    type: String,
+    trim: true,
+    maxlength: 500,
+    default: null
+  },
+  bannedAt: {
+    type: Date,
+    default: null
+  },
+  bannedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
+  },
+  verifiedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  // Suspicious activity tracking
+  suspiciousActivityCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  lastSuspiciousActivity: {
+    type: Date,
+    default: null
+  },
+  suspiciousActivityFlags: {
+    type: [String],
+    default: []
+  },
+  // Rate limiting and activity tracking
+  lastLoginAt: {
+    type: Date,
+    default: null
+  },
+  lastLoginIp: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  accountRecoveryEnabled: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,
@@ -40,6 +106,10 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ createdAt: -1 });
+userSchema.index({ isBanned: 1, isVerified: 1 });
+userSchema.index({ isBanned: 1 });
+userSchema.index({ isVerified: 1 });
+userSchema.index({ suspiciousActivityCount: -1 });
 
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();

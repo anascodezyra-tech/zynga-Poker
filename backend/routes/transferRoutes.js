@@ -7,6 +7,8 @@ import { transferLimiter, apiLimiter } from "../middleware/rateLimiter.js";
 import { transferValidation, reverseValidation } from "../middleware/validation.js";
 import { idempotencyCheck } from "../middleware/idempotency.js";
 import { captureAuditInfo } from "../middleware/audit.js";
+import { checkBanStatus } from "../middleware/banCheck.js";
+import { detectSuspiciousTransfer } from "../middleware/suspiciousActivity.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -16,6 +18,8 @@ router.post(
   apiLimiter,
   transferLimiter,
   protect,
+  checkBanStatus,
+  detectSuspiciousTransfer,
   idempotencyCheck,
   captureAuditInfo,
   transferValidation,

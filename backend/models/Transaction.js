@@ -24,7 +24,7 @@ const transactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["manual", "daily-mint", "request", "reversal"],
+    enum: ["manual", "daily-mint", "request", "reversal", "chip-recovery"],
     required: true
   },
   status: {
@@ -78,6 +78,17 @@ const transactionSchema = new mongoose.Schema({
   verifiedAt: {
     type: Date,
     default: null
+  },
+  // Chip recovery specific fields
+  recoveryFromUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  recoveryReason: {
+    type: String,
+    trim: true,
+    maxlength: 500
   }
 }, {
   timestamps: true,

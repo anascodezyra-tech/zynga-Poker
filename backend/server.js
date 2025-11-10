@@ -17,6 +17,7 @@ import balanceRoutes from "./routes/balanceRoutes.js";
 import transferRoutes from "./routes/transferRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import dailyMintRoutes from "./routes/dailyMintRoute.js";
+import recoveryRoutes from "./routes/recoveryRoutes.js";
 
 dotenv.config();
 
@@ -117,6 +118,7 @@ app.use("/api", balanceRoutes);
 app.use("/api", transferRoutes);
 app.use("/api", transactionRoutes);
 app.use("/api", dailyMintRoutes);
+app.use("/api", recoveryRoutes);
 
 // Test route
 app.get("/", (req, res) => {

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import logger from "../utils/logger.js";
+import { trackSuspiciousActivity } from "../middleware/suspiciousActivity.js";
 
 export const login = async (req, res) => {
   try {
@@ -26,11 +27,40 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Check if user is banned
+    if (user.isBanned) {
+      logger.warn(`Banned user attempted login: ${normalizedEmail}`);
+      return res.status(403).json({
+        message: "Account is banned",
+        banReason: user.banReason,
+        bannedAt: user.bannedAt,
+      });
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      // Track failed login attempt
+      user.loginAttempts = (user.loginAttempts || 0) + 1;
+      
+      // Track suspicious activity after multiple failed attempts
+      if (user.loginAttempts >= 5) {
+        await trackSuspiciousActivity(
+          user._id,
+          "multiple_failed_logins",
+          { attempts: user.loginAttempts, ip: req.ip }
+        );
+      }
+      
+      await user.save();
       logger.warn(`Login attempt with invalid password for: ${normalizedEmail}`);
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    // Successful login - reset login attempts and update tracking
+    user.loginAttempts = 0;
+    user.lastLoginAt = new Date();
+    user.lastLoginIp = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+    await user.save();
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
